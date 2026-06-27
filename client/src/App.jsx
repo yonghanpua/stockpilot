@@ -1,122 +1,131 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import React, { useState } from "react";
+import { useProducts } from "./hooks/useProducts.js";
+import { useToast } from "./hooks/useToast.js";
+import ProductForm from "./components/ProductForm.jsx";
+import InventoryTable from "./components/InventoryTable.jsx";
+import ConfirmModal from "./components/ConfirmModal.jsx";
+import ToastStack from "./components/ToastStack.jsx";
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const {
+    products,
+    loading,
+    error,
+    refresh,
+    createProduct,
+    updateProduct,
+    adjustStock,
+    removeProduct,
+  } = useProducts();
+
+  const { toasts, toast, dismiss } = useToast();
+
+  const [editProduct, setEditProduct] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [formBusy, setFormBusy] = useState(false);
+
+  // ── Form submit (create OR update) ───────────────
+  async function handleFormSubmit(payload) {
+    setFormBusy(true);
+    try {
+      if (editProduct) {
+        await updateProduct(editProduct.id, payload);
+        toast(`"${payload.name}" updated.`);
+        setEditProduct(null);
+      } else {
+        await createProduct(payload);
+        toast(`"${payload.name}" added.`);
+      }
+      return true;
+    } catch (err) {
+      toast(err.message, "error");
+      return false;
+    } finally {
+      setFormBusy(false);
+    }
+  }
+
+  // ── Delete ────────────────────────────────────────
+  async function handleDeleteConfirm() {
+    try {
+      await removeProduct(deleteTarget.id);
+      toast(`"${deleteTarget.name}" deleted.`, "info");
+    } catch (err) {
+      toast(err.message, "error");
+    } finally {
+      setDeleteTarget(null);
+    }
+  }
+
+  // ── Stock adjustment with low-stock toast ─────────
+  async function handleAdjustStock(id, delta) {
+    const updated = await adjustStock(id, delta);
+    if (updated.stock_count === 0)
+      toast(`${updated.name} is out of stock.`, "error");
+    else if (updated.stock_count < 5)
+      toast(`${updated.name}: ${updated.stock_count} left.`, "info");
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
+    <div className="min-h-screen bg-slate-50">
+      {/* Sticky navbar */}
+      <header className="sticky top-0 z-30 flex items-center justify-between px-6 py-3 bg-white border-b border-slate-200 shadow-sm">
+        <div className="flex items-center gap-2">
+          <svg
+            className="h-6 w-6 text-sky-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"
+            />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z"
+            />
+          </svg>
+          <span className="font-semibold text-slate-800 text-lg tracking-tight">
+            StockPilot
+          </span>
         </div>
         <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
+          onClick={refresh}
+          className="text-xs text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg px-3 py-1.5 transition"
         >
-          Count is {count}
+          ↻ Refresh
         </button>
-      </section>
+      </header>
 
-      <div className="ticks"></div>
+      <main className="grid lg:grid-cols-[380px_1fr]">
+        {/* Sticky form — left column */}
+        <ProductForm
+          onSubmit={handleFormSubmit}
+          editProduct={editProduct}
+          onCancelEdit={() => setEditProduct(null)}
+          loading={formBusy}
+        />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+        {/* Table — right column */}
+        <InventoryTable
+          products={products}
+          loading={loading}
+          onEdit={setEditProduct}
+          onDelete={setDeleteTarget}
+          onAdjustStock={handleAdjustStock}
+        />
+      </main>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      <ConfirmModal
+        product={deleteTarget}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteTarget(null)}
+      />
+      <ToastStack toasts={toasts} dismiss={dismiss} />
+    </div>
+  );
 }
-
-export default App

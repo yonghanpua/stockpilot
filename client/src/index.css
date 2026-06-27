@@ -1,3 +1,50 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* client/src/index.css */
+@import "tailwindcss";
+
+@layer components {
+  .field {
+    @apply w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm
+           shadow-sm transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20;
+  }
+
+  .td {
+    @apply px-4 py-3 text-sm text-slate-700;
+  }
+
+  .th {
+    @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500;
+  }
+
+  /* ── Stock badges ── */
+  .badge-green,
+  .badge-amber,
+  .badge-red {
+    @apply inline-flex items-center justify-center rounded-full px-2 py-0.5
+         text-xs font-medium ring-1 min-w-[90px] text-center;
+  }
+
+  .badge-green {
+    @apply bg-emerald-50 text-emerald-700 ring-emerald-600/20;
+  }
+  .badge-amber {
+    @apply bg-amber-50 text-amber-700 ring-amber-600/20;
+  }
+  .badge-red {
+    @apply bg-red-50 text-red-700 ring-red-600/20;
+  }
+
+  /* ── Stock stepper ── */
+  .stepper {
+    @apply inline-flex items-center gap-1;
+  }
+
+  .stepper button {
+    @apply flex h-6 w-6 items-center justify-center rounded-md border border-slate-200
+           bg-white text-sm font-medium text-slate-600 shadow-sm transition
+           hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+
+  .stepper span {
+    @apply w-8 text-center text-sm font-semibold tabular-nums text-slate-700;
+  }
+}
